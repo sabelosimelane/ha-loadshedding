@@ -3,7 +3,7 @@ from homeassistant.helpers import config_validation as cv
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 from homeassistant.const import CONF_API_KEY
 
-from .api import YourIntegrationAPI
+from .api import LoadSheddingService
 
 DOMAIN = 'ha-loadshedding'
 
@@ -19,7 +19,7 @@ async def async_setup(hass, config):
     api_key = config[DOMAIN][CONF_API_KEY]
 
     session = async_get_clientsession(hass)
-    hass.data[DOMAIN] = YourIntegrationAPI(api_key, session)
+    hass.data[DOMAIN] = LoadSheddingService(api_key, session)
 
     # Load platforms...
     hass.async_create_task(

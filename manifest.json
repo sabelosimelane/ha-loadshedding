@@ -1,0 +1,10 @@
+{
+    "domain": "ha-eskom.co.za",
+    "name": "Load Shedding Next",
+    "documentation": "https://github.com/sabelosimelane/ha-loadshedding",
+    "codeowners": ["@sabside"],
+    "requirements": [],
+    "dependencies": [],
+    "version": "1.0.0"
+  }
+  

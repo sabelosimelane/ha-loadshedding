@@ -1,0 +1,8 @@
+{
+    "name": "Loadshedding Service",
+    "domains": ["ha-loadshedding"],
+    "documentation": "https://github.com/sabelosimelane/ha-loadshedding/main/README.md",
+    "codeowners": ["@yourusername"],
+    "render_readme": true
+  }
+  

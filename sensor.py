@@ -1,57 +1,49 @@
-import logging
 import requests
-import voluptuous as vol
-
-from datetime import timedelta
-from homeassistant.components.sensor import PLATFORM_SCHEMA
-from homeassistant.const import CONF_API_KEY, CONF_NAME
-import homeassistant.helpers.config_validation as cv
 from homeassistant.helpers.entity import Entity
-from homeassistant.util import Throttle
+from . import DOMAIN
 
-_LOGGER = logging.getLogger(__name__)
+def async_setup_platform(hass, config, async_add_entities, discovery_info=None):
+    """Set up the Your Integration sensor."""
+    api_key = hass.data[DOMAIN]['api_key']
+    async_add_entities([LoadSheddingService(api_key)], True)
 
-DEFAULT_NAME = 'Custom Schedule'
-CONF_ENDPOINT = 'https://developer.sepush.co.za/business/2.0/area?id=eskde-10-fourwaysext10cityofjohannesburggauteng&test=current'
-
-MIN_TIME_BETWEEN_UPDATES = timedelta(minutes=1)
-
-PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend({
-    vol.Required(CONF_API_KEY): cv.string,
-    vol.Optional(CONF_NAME, default=DEFAULT_NAME): cv.string,
-})
-
-def setup_platform(hass, config, add_entities, discovery_info=None):
-    api_key = config[CONF_API_KEY]
-    name = config[CONF_NAME]
-
-    add_entities([CustomScheduleSensor(api_key, name)])
-
-class CustomScheduleSensor(Entity):
-    def __init__(self, api_key, name):
+class LoadSheddingService(Entity):
+    def __init__(self, api_key):
+        """Initialize the sensor."""
         self._api_key = api_key
-        self._name = name
         self._state = None
+        self._name = None
+        self._region = None
 
     @property
     def name(self):
+        """Return the name of the sensor."""
         return self._name
 
     @property
     def state(self):
+        """Return the state of the sensor."""
         return self._state
 
-    @Throttle(MIN_TIME_BETWEEN_UPDATES)
-    def update(self):
+    @property
+    def extra_state_attributes(self):
+        """Return the state attributes."""
+        return {"region": self._region}
+
+    async def async_update(self):
+        """Fetch new state data for the sensor."""
         headers = {'Authorization': self._api_key}
-        try:
-            response = requests.get(CONF_ENDPOINT, headers=headers)
-            response.raise_for_status()
-            data = response.json()
+        response = requests.get("https://developer.sepush.co.za/business/2.0/area?id=eskde-10-fourwaysext10cityofjohannesburggauteng&test=current", headers=headers)
+        data = response.json()
+        
+        if data:
+            self._name = data['info']['name']
+            self._region = data['info']['region']
 
-            # Here you would process the response and store the result in self._state
-            self._state = 'Updated' # Placeholder line, replace with real processing
+            # This assumes that "events" always has at least one entry. You may want to add some error checking here.
+            event = data['events'][0]
 
-        except requests.exceptions.RequestException as ex:
-            _LOGGER.error("Error getting data from the api: %s", ex)
-            self._state = 'Error'
+            if event['note'] == 'Stage 2':
+                self._state = 'Power Out'
+            else:
+                self._state = 'Power On'
